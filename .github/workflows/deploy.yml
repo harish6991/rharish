@@ -14,14 +14,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Install Node.js (if you're building a Node.js app)
+      # Install Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18.19.0'  # Use your required Node version
+          node-version: '18'  # Adjust based on your Node.js version (18 in your case)
 
-      # Install dependencies if package.json has changed
-        # Check for changes in package.json
+      # Check for changes in package.json
       - name: Check for package.json changes
         id: check_changes
         run: |
@@ -31,38 +30,40 @@ jobs:
             echo "changes=false" >> $GITHUB_ENV
           fi
 
+      # Install dependencies if package.json has changed
       - name: Install dependencies
-        if: steps.check_changes.outputs.changes == 'true'
+        if: env.changes == 'true'
         run: npm install
 
-  
+
       # Deploy via SSH to your VPS
       - name: Deploy to VPS
+        id: deploy
         uses: appleboy/ssh-action@v0.1.4
         with:
           host: ${{ secrets.VPS_HOST }}    # Your VPS host
-          username: ${{ secrets.VPS_USER }} # Your SSH username (e.g., root)
+          username: ${{ secrets.VPS_USER }} # Your SSH username
           key: ${{ secrets.VPS_KEY }}       # Your SSH private key
-          port: 22                          # SSH port, default is 22
+          port: 22                          # SSH port (default 22)
           script: |
-            cd rharish # Navigate to your project folder on VPS
-            git add . # Add changes to the staging area
-            git pull origin main || exit 1 # Pull latest changes and exit if it fails
+            cd rharish
+            git add .
+            git pull origin main || exit 1
             if [ "$changes" = "true" ]; then
-              npm install || exit 1 # Install/update dependencies and exit if it fails
+              npm install || exit 1
             fi
-            pm2 restart rharish-app  # Restart the specific app
+            pm2 restart rharish-app  # Restart the application
 
-          # Rollback if deployment failed
+      # Rollback if deployment failed
       - name: Rollback if deployment failed
         if: steps.deploy.outcome == 'failure'
         uses: appleboy/ssh-action@v0.1.4
         with:
           host: ${{ secrets.VPS_HOST }}    # Your VPS host
-          username: ${{ secrets.VPS_USER }} # Your SSH username (e.g., root)
+          username: ${{ secrets.VPS_USER }} # Your SSH username
           key: ${{ secrets.VPS_KEY }}       # Your SSH private key
-          port: 22                          # SSH port, default is 22
+          port: 22                          # SSH port
           script: |
-            cd rharish # Navigate to your project folder on VPS
-            git reset --hard HEAD^ # Revert to the previous commit
-            pm2 restart rharish-app # Restart the application
+            cd rharish
+            git reset --hard HEAD^  
+            pm2 restart rharish-app
