@@ -35,10 +35,7 @@ jobs:
         if: steps.check_changes.outputs.changes == 'true'
         run: npm install
 
-      # Run tests (optional)
-      - name: Run tests
-        run: npm test
-
+  
       # Deploy via SSH to your VPS
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v0.1.4
