@@ -65,5 +65,5 @@ jobs:
           port: 22                          # SSH port
           script: |
             cd rharish
-            git reset --hard HEAD^  
+            git reset --hard HEAD^
             pm2 restart rharish-app
