@@ -1,69 +1,12 @@
-name: Deploy to VPS
-
-on:
-  push:
-    branches:
-      - main  # Trigger this workflow on pushes to the main branch
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-
-    steps:
-      # Check out the code
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Install Node.js
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'  # Adjust based on your Node.js version (18 in your case)
-
-      # Check for changes in package.json
-      - name: Check for package.json changes
-        id: check_changes
-        run: |
-          if git diff --name-only HEAD^ HEAD | grep -q "package.json"; then
-            echo "changes=true" >> $GITHUB_ENV
-          else
-            echo "changes=false" >> $GITHUB_ENV
-          fi
-
-      # Install dependencies if package.json has changed
-      - name: Install dependencies
-        if: env.changes == 'true'
-        run: npm install
-
-
-      # Deploy via SSH to your VPS
-      - name: Deploy to VPS
-        id: deploy
-        uses: appleboy/ssh-action@v0.1.4
-        with:
-          host: ${{ secrets.VPS_HOST }}    # Your VPS host
-          username: ${{ secrets.VPS_USER }} # Your SSH username
-          key: ${{ secrets.VPS_KEY }}       # Your SSH private key
-          port: 22                          # SSH port (default 22)
-          script: |
-            cd rharish
-            git add .
-            git pull origin main || exit 1
-            if [ "$changes" = "true" ]; then
-              npm install || exit 1
-            fi
-            pm2 restart rharish-app  # Restart the application
-
-      # Rollback if deployment failed
-      - name: Rollback if deployment failed
-        if: steps.deploy.outcome == 'failure'
-        uses: appleboy/ssh-action@v0.1.4
-        with:
-          host: ${{ secrets.VPS_HOST }}    # Your VPS host
-          username: ${{ secrets.VPS_USER }} # Your SSH username
-          key: ${{ secrets.VPS_KEY }}       # Your SSH private key
-          port: 22                          # SSH port
-          script: |
-            cd rharish
-            git reset --hard HEAD^
-            pm2 restart rharish-app
+- name: Deploy to VPS
+  uses: appleboy/ssh-action@v0.1.4
+  with:
+    host: ${{ secrets.VPS_HOST }}     # Your VPS IP or domain name
+    username: ${{ secrets.VPS_USER }} # Your SSH username (e.g., root)
+    key: ${{ secrets.VPS_KEY }}       # Your SSH private key (from GitHub Secrets)
+    port: 22                          # Default SSH port is 22
+    script: |
+      cd rharish
+      git pull origin main
+      npm install
+      pm2 restart all
