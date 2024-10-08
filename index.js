@@ -7,7 +7,7 @@ const db = require('./config/db')
 dotenv.config()
 connectToDatabase()
 app.get('/',(req,res)=>{
-    res.send("Testing and test passsed ")
+    res.send("Testing")
 })
 app.listen(process.env.PORT,()=>{
     console.log(`The Application is running at the http://${process.env.ENVIRONMENT}:${process.env.PORT}`)
