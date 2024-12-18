@@ -20,6 +20,7 @@ app.use(bodyParser.urlencoded({ extended: false }))
 connectToDatabase()
 // making collection
 makeCollection()
+
 //makeRefresh Token table
 makeRefreshCollection()
 
